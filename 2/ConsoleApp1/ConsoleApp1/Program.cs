@@ -12,9 +12,12 @@ namespace ConsoleApp1
 
             string pattern = "*";
 
-            GetDirectoriesAndFiles directoriesAndFiles = new GetDirectoriesAndFiles();
+            GetDirectoriesAndFiles getDirectoriesAndFiles = new GetDirectoriesAndFiles();
 
-            FileSystemVisitor fileSystemVisitor = new FileSystemVisitor(path: path, count: 4, directoriesAndFiles: directoriesAndFiles, pattern: Func(pattern, filter => pattern));
+            FileSystemVisitor fileSystemVisitor = new FileSystemVisitor(path: path, countItems: 4, getDirectoriesAndFiles: getDirectoriesAndFiles, pattern: FuncMethod(pattern, filter => pattern));
+
+            FilteredElementsArgs filteredElementsArgs = new FilteredElementsArgs();
+            ElementsArgs elementsArgs = new ElementsArgs();
 
             #region Events
             fileSystemVisitor.SearchStarted += (e, Args) => { Console.WriteLine("Search Started"); };
@@ -27,19 +30,39 @@ namespace ConsoleApp1
             fileSystemVisitor.FilteredFileFinded += (e, Args) => { Console.WriteLine("Filtered File Finded"); };
             #endregion 
 
+            List<string> listItems = new List<string>();
+
             try
             {
-                foreach (var FoldersAndFiles in fileSystemVisitor.SearchDirectoryAndFiles())
+                Console.WriteLine("Списокк элементов: ");
+                foreach (var DirectoryOrFile in fileSystemVisitor.SearchDirectoryAndFiles())
                 {
-                    Console.WriteLine(FoldersAndFiles);
+                    listItems.Add(DirectoryOrFile);
+                    Console.WriteLine(DirectoryOrFile);
                 }
+
+                if(filteredElementsArgs.FilteredRemoveItem == true || elementsArgs.RemoveItem == true)
+                {
+                    Console.Write("\nУкажите номер элемента: ");
+                    int number = Convert.ToInt32(Console.ReadLine());
+
+                    listItems.RemoveAt(number);
+                }
+               
+                Console.WriteLine("\nСписок элементов после удаления: ");
+                foreach (var item in listItems)
+                {
+                    Console.WriteLine(item);
+                }
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+
         }
-        static string Func(string filter, Func<string, string> filters) => filters(filter);
+        static string FuncMethod(string filter, Func<string, string> filters) => filters(filter);
     }
 }
 

@@ -56,7 +56,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EventArgs\ElementsArgs.cs" />
     <Compile Include="FileSystemVisitor.cs" />
+    <Compile Include="EventArgs\FilteredElementsArgs.cs" />
     <Compile Include="GetDirectoriesAndFiles.cs" />
     <Compile Include="IGetDirectoriesAndFiles.cs" />
     <Compile Include="Program.cs" />

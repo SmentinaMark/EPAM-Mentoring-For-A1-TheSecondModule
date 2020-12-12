@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace ConsoleApp1
 {
@@ -10,14 +11,14 @@ namespace ConsoleApp1
         int i = 0;
 
         private readonly string _path;
-        private readonly int _countElement;
+        private readonly int _countItems;
         private readonly string _pattern;
 
-        private readonly IGetDirectoriesAndFiles _directoriesAndFiles;
+        private readonly IGetDirectoriesAndFiles _getDirectoriesAndFiles;
 
         bool filter = true;
 
-        public FileSystemVisitor(string path, int count ,IGetDirectoriesAndFiles directoriesAndFiles, string pattern = null)
+        public FileSystemVisitor(string path, int countItems, IGetDirectoriesAndFiles getDirectoriesAndFiles, string pattern = null)
         {
             if (pattern == null)
             {
@@ -25,10 +26,10 @@ namespace ConsoleApp1
             }
 
             _path = path;
-            _countElement = count;
+            _countItems = countItems;
             _pattern = pattern != null ? pattern : "*";
 
-            _directoriesAndFiles = directoriesAndFiles;
+            _getDirectoriesAndFiles = getDirectoriesAndFiles;
 
             AnalizePath(_path);
         }
@@ -37,27 +38,34 @@ namespace ConsoleApp1
         {
             OnSearchStarted(new EventArgs());
 
-            var directories = _directoriesAndFiles.GetDirectories(_path, _pattern);
+            var filteredElementArgs = new FilteredElementsArgs();
+            var elementArgs = new ElementsArgs();
+
+            var directories = _getDirectoriesAndFiles.GetDirectories(_path, _pattern);
             foreach (string directory in directories)
             {
                 if(filter)
                 {
-                    OnFilteredDirectoryFinded(new EventArgs());
+                    OnFilteredDirectoryFinded(filteredElementArgs);
+
                     yield return directory;
 
                     i++;
-                    if (Stop(_countElement))
+                   
+                    if (filteredElementArgs.FilteredStopSearch && Stop(_countItems))
                     {
                         break;
                     }
                 }
                 else
                 {
-                    OnDirectoryFinded(new EventArgs());
+                    OnDirectoryFinded(elementArgs);
+
                     yield return directory;
 
                     i++;
-                    if (Stop(_countElement))
+                   
+                    if (elementArgs.StopSearch && Stop(_countItems))
                     {
                         break;
                     }
@@ -67,29 +75,33 @@ namespace ConsoleApp1
 
             i = 0;
 
-            var files = _directoriesAndFiles.GetFiles(_path, _pattern);
+            var files = _getDirectoriesAndFiles.GetFiles(_path, _pattern);
             foreach (string file in files)
             {
                 if(filter)
                 {
-                    OnFilteredFileFinded(new EventArgs());
+                    OnFilteredFileFinded(filteredElementArgs);
+
                     yield return file;
 
                     i++;
-                    if (Stop(_countElement))
+
+                    if (filteredElementArgs.FilteredStopSearch && Stop(_countItems))
                     {
-                         break;
+                        break;
                     }
                 }
                 else
                 {
-                    OnFileFinded(new EventArgs());
+                    OnFileFinded(elementArgs);
+
                     yield return file;
 
                     i++;
-                    if (Stop(_countElement))
+
+                    if (elementArgs.StopSearch && Stop(_countItems))
                     {
-                         break;
+                        break;
                     }
                 }
             }
@@ -97,7 +109,7 @@ namespace ConsoleApp1
         }
         public bool Stop(int count)
         {
-            if(i >= count)
+            if (i >= count)
             {
                 return true;
             }
@@ -106,13 +118,15 @@ namespace ConsoleApp1
                 return false;
             }
         }
+
         public void AnalizePath(string path)
         {
             if(path != null)
             {
-                _directoriesAndFiles.LogPath(path);
+                _getDirectoriesAndFiles.LogPath(path);
             }
         }
+
         public IEnumerator<string> GetEnumerator()
         {
             return SearchDirectoryAndFiles().GetEnumerator();
@@ -127,11 +141,11 @@ namespace ConsoleApp1
         public event EventHandler<EventArgs> SearchStarted;
         public event EventHandler<EventArgs> SearchFinished;
 
-        public event EventHandler<EventArgs> DirectoryFinded;
-        public event EventHandler<EventArgs> FileFinded;
+        public event EventHandler<ElementsArgs> DirectoryFinded; 
+        public event EventHandler<ElementsArgs> FileFinded; 
 
-        public event EventHandler<EventArgs> FilteredDirectoryFinded;
-        public event EventHandler<EventArgs> FilteredFileFinded;
+        public event EventHandler<FilteredElementsArgs> FilteredDirectoryFinded; 
+        public event EventHandler<FilteredElementsArgs> FilteredFileFinded;
 
         protected virtual void OnSearchStarted(EventArgs args)
         {
@@ -143,22 +157,22 @@ namespace ConsoleApp1
             SearchFinished?.Invoke(this, args);
         }
 
-        protected virtual void OnDirectoryFinded(EventArgs args)
+        protected virtual void OnDirectoryFinded(ElementsArgs args)
         {
             DirectoryFinded?.Invoke(this, args);
         }
 
-        protected virtual void OnFileFinded(EventArgs args)
+        protected virtual void OnFileFinded(ElementsArgs args)
         {
             FileFinded?.Invoke(this, args);
         }
 
-        protected virtual void OnFilteredDirectoryFinded(EventArgs args)
+        protected virtual void OnFilteredDirectoryFinded(FilteredElementsArgs args)
         {
             FilteredDirectoryFinded?.Invoke(this, args);
         }
 
-        protected virtual void OnFilteredFileFinded(EventArgs args)
+        protected virtual void OnFilteredFileFinded(FilteredElementsArgs args)
         {
             FilteredFileFinded?.Invoke(this, args);
         }
