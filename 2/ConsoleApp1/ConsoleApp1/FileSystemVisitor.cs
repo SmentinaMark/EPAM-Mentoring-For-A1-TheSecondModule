@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace ConsoleApp1
 {
-    public partial class FileSystemVisitor : IEnumerable<string>
+    public class FileSystemVisitor : IEnumerable<string>
     {
         int i = 0;
 
